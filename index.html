@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+
 <title>Conbi Fan Live</title>
 
 <style>
@@ -13,6 +15,7 @@ html, body {
   height: 100%;
   background: url("https://www.liveconbifan.f5.si/live-offline.png") center/cover no-repeat fixed;
   font-family: sans-serif;
+  overflow: hidden;
 }
 
 /* ヘッダー */
@@ -69,6 +72,117 @@ Conbi Fan - Live
   </div>
 
 </div>
+
+<script>
+let wasOnline = false;
+
+/* =========================
+   通知許可
+========================= */
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission();
+}
+
+/* =========================
+   楽器風開始音
+========================= */
+function playStartSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  const notes = [523.25, 659.25, 783.99];
+
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = freq;
+
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime + i * 0.15);
+    osc.stop(ctx.currentTime + 1.5);
+  });
+}
+
+/* =========================
+   通知
+========================= */
+function showNotification() {
+  if (Notification.permission !== "granted") return;
+
+  new Notification("🔴 LIVE START!", {
+    body: "Conbi Fanの配信が始まりました",
+    icon: "https://www.liveconbifan.f5.si/favicon.png"
+  });
+}
+
+/* =========================
+   ポップアップ
+========================= */
+function showPopup() {
+  const el = document.createElement("div");
+  el.innerText = "🔴 LIVE START!";
+
+  el.style.position = "fixed";
+  el.style.top = "20px";
+  el.style.left = "50%";
+  el.style.transform = "translateX(-50%)";
+  el.style.background = "linear-gradient(90deg, red, orange)";
+  el.style.color = "white";
+  el.style.padding = "12px 24px";
+  el.style.borderRadius = "12px";
+  el.style.fontWeight = "bold";
+  el.style.zIndex = "9999";
+  el.style.boxShadow = "0 0 20px rgba(255,0,0,0.6)";
+  el.style.animation = "pop 0.3s ease-out";
+
+  document.body.appendChild(el);
+
+  setTimeout(() => el.remove(), 5000);
+}
+
+/* =========================
+   アニメーション
+========================= */
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes pop {
+  from { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}`;
+document.head.appendChild(style);
+
+/* =========================
+   配信状態チェック
+========================= */
+async function checkLive() {
+  try {
+    const res = await fetch("https://liveconbifan.shares.zrok.io/api/status");
+    const data = await res.json();
+
+    if (data.online && !wasOnline) {
+      showNotification();
+      showPopup();
+      playStartSound();
+    }
+
+    wasOnline = data.online;
+  } catch (e) {
+    console.log("status error");
+  }
+}
+
+/* =========================
+   ループ監視
+========================= */
+setInterval(checkLive, 3000);
+checkLive();
+</script>
 
 </body>
 </html>
