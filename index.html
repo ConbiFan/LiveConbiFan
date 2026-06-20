@@ -1,12 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="favicon.png">
+
+<title>Conbi Fan Live</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: url("https://www.liveconbifan.f5.si/live-offline.png") center/cover no-repeat fixed;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+
+/* ヘッダー */
+.header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: white;
+  background: rgba(0,0,0,0.5);
+  font-weight: bold;
+}
+
+/* 通知ボタン */
+#notifyBtn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ff3b3b;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* 状態表示 */
+#notifyStatus {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.4);
+}
+
+/* レイアウト */
+.layout {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  height: calc(100vh - 56px);
+  gap: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* パネル */
+.panel {
+  background: rgba(0,0,0,0.5);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* iframe */
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  Conbi Fan - Live
+
+  <button id="notifyBtn" onclick="enableNotifications()">
+    🔔 通知
+    <span id="notifyStatus">未設定</span>
+  </button>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <iframe src="https://liveconbifan.shares.zrok.io/embed/video"></iframe>
+  </div>
+
+  <div class="panel">
+    <iframe src="https://liveconbifan.shares.zrok.io/embed/chat/readwrite"></iframe>
+  </div>
+</div>
+
 <script>
 let wasOnline = false;
 
 /* =========================
-   通知UI（消えない仕様）
+   通知UI更新（消えない）
 ========================= */
 function updateNotifyUI() {
-  const btn = document.getElementById("notifyBtn");
   const status = document.getElementById("notifyStatus");
+  const btn = document.getElementById("notifyBtn");
+
+  if (!status || !btn) return;
 
   const perm = Notification.permission;
 
@@ -21,7 +124,7 @@ function updateNotifyUI() {
     status.style.color = "orange";
   }
 
-  // 🔥重要：ボタンは絶対に消さない
+  // ボタンは絶対に消さない
   btn.style.display = "flex";
 }
 
@@ -100,11 +203,14 @@ async function checkLive() {
 }
 
 /* =========================
-   起動（ここ超重要）
+   起動（安全版）
 ========================= */
-document.addEventListener("DOMContentLoaded", () => {
-  updateNotifyUI();      // ← 初期化必須
+window.addEventListener("DOMContentLoaded", () => {
+  updateNotifyUI();
   setInterval(checkLive, 3000);
   checkLive();
 });
 </script>
+
+</body>
+</html>
