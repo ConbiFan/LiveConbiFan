@@ -29,6 +29,18 @@ html, body {
   font-weight: bold;
 }
 
+/* 通知ボタン */
+#notifyBtn {
+  margin-left: auto;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ff3b3b;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 /* レイアウト */
 .layout {
   display: grid;
@@ -52,28 +64,16 @@ iframe {
   height: 100%;
   border: none;
 }
-
-/* 通知ボタン */
-#notifyBtn {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 9999;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  background: #ff3b3b;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-Conbi Fan - Live
+  Conbi Fan - Live
+  <button id="notifyBtn" onclick="enableNotifications()">
+    🔔 通知ON
+  </button>
 </div>
 
 <div class="layout">
@@ -88,12 +88,23 @@ Conbi Fan - Live
 
 </div>
 
-<button id="notifyBtn" onclick="enableNotifications()">
-通知を有効化
-</button>
-
 <script>
 let wasOnline = false;
+
+/* =========================
+   ボタン表示制御
+========================= */
+function updateNotifyButton() {
+  const btn = document.getElementById("notifyBtn");
+
+  if (!btn) return;
+
+  if (Notification.permission === "granted") {
+    btn.style.display = "none";
+  } else {
+    btn.style.display = "block";
+  }
+}
 
 /* =========================
    通知許可
@@ -101,10 +112,12 @@ let wasOnline = false;
 async function enableNotifications() {
   const p = await Notification.requestPermission();
   console.log("permission:", p);
+
+  updateNotifyButton();
 }
 
 /* =========================
-   音（開始ファンファーレ）
+   音
 ========================= */
 function playStartSound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -142,42 +155,6 @@ function showNotification() {
 }
 
 /* =========================
-   ポップアップ
-========================= */
-function showPopup() {
-  const el = document.createElement("div");
-  el.innerText = "🔴 LIVE START!";
-
-  el.style.position = "fixed";
-  el.style.top = "20px";
-  el.style.left = "50%";
-  el.style.transform = "translateX(-50%)";
-  el.style.background = "linear-gradient(90deg, red, orange)";
-  el.style.color = "white";
-  el.style.padding = "12px 24px";
-  el.style.borderRadius = "12px";
-  el.style.fontWeight = "bold";
-  el.style.zIndex = "9999";
-  el.style.boxShadow = "0 0 20px rgba(255,0,0,0.6)";
-  el.style.animation = "pop 0.3s ease-out";
-
-  document.body.appendChild(el);
-
-  setTimeout(() => el.remove(), 5000);
-}
-
-/* =========================
-   アニメーション
-========================= */
-const style = document.createElement("style");
-style.innerHTML = `
-@keyframes pop {
-  from { transform: translateX(-50%) scale(0.5); opacity: 0; }
-  to { transform: translateX(-50%) scale(1); opacity: 1; }
-}`;
-document.head.appendChild(style);
-
-/* =========================
    配信チェック
 ========================= */
 async function checkLive() {
@@ -192,10 +169,8 @@ async function checkLive() {
 
     console.log("LIVE:", isOnline, "prev:", wasOnline);
 
-    // OFF → ON の瞬間だけ発火
     if (isOnline && !wasOnline) {
       showNotification();
-      showPopup();
       playStartSound();
     }
 
@@ -209,6 +184,7 @@ async function checkLive() {
 /* =========================
    起動
 ========================= */
+updateNotifyButton();
 setInterval(checkLive, 3000);
 checkLive();
 </script>
