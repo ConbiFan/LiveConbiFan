@@ -52,6 +52,21 @@ iframe {
   height: 100%;
   border: none;
 }
+
+/* 通知ボタン */
+#notifyBtn {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 9999;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: #ff3b3b;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -73,18 +88,23 @@ Conbi Fan - Live
 
 </div>
 
+<button id="notifyBtn" onclick="enableNotifications()">
+通知を有効化
+</button>
+
 <script>
 let wasOnline = false;
 
 /* =========================
    通知許可
 ========================= */
-if ("Notification" in window && Notification.permission === "default") {
-  Notification.requestPermission();
+async function enableNotifications() {
+  const p = await Notification.requestPermission();
+  console.log("permission:", p);
 }
 
 /* =========================
-   楽器風開始音
+   音（開始ファンファーレ）
 ========================= */
 function playStartSound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -116,7 +136,7 @@ function showNotification() {
   if (Notification.permission !== "granted") return;
 
   new Notification("🔴 LIVE START!", {
-    body: "Conbi Fanの配信が始まりました",
+    body: "Conbi Fanの配信が始まったよ！",
     icon: "https://www.liveconbifan.f5.si/favicon.png"
   });
 }
@@ -158,27 +178,36 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 /* =========================
-   配信状態チェック
+   配信チェック
 ========================= */
 async function checkLive() {
   try {
-    const res = await fetch("https://liveconbifan.shares.zrok.io/api/status");
+    const res = await fetch("https://liveconbifan.shares.zrok.io/api/status", {
+      cache: "no-store"
+    });
+
     const data = await res.json();
 
-    if (data.online && !wasOnline) {
+    const isOnline = data.online === true || data.online === "true";
+
+    console.log("LIVE:", isOnline, "prev:", wasOnline);
+
+    // OFF → ON の瞬間だけ発火
+    if (isOnline && !wasOnline) {
       showNotification();
       showPopup();
       playStartSound();
     }
 
-    wasOnline = data.online;
+    wasOnline = isOnline;
+
   } catch (e) {
-    console.log("status error");
+    console.log("status error:", e);
   }
 }
 
 /* =========================
-   ループ監視
+   起動
 ========================= */
 setInterval(checkLive, 3000);
 checkLive();
